@@ -1,0 +1,6 @@
+RAW_DATA/
+NOTEBOOKS/
+spectra_swift_xrt/
+lightcurves_swift_xrt/
+run*
+__pycache__/

@@ -1,0 +1,2 @@
+BAT: https://swift.gsfc.nasa.gov/results/transients/weak/SAXJ1808.4-3658.lc.txt
+MAXI: https://maxi.riken.jp/star_data/J1808-369/J1808-369.html
