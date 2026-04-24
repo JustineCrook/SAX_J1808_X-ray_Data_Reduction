@@ -41,12 +41,21 @@ from plotting_helpers import *
 import sys
 import os
 sys.path.append(os.path.abspath("../"))
-from input_parameters import TRANSITIONS, SOFT_LO, SOFT_HI, HARD_LO, HARD_HI, MIN_E_LC
+from input_parameters import QS, HS, SS, IMS, SOFT_LO, SOFT_HI, HARD_LO, HARD_HI, MIN_E_LC
 
 
 ####################################################################################################################
 ## GET DATA FUNCTIONS
 ####################################################################################################################
+
+
+colours_states = {
+    "QS":  "tab:blue",
+    "HS":  "tab:orange",
+    "SS":  "tab:green",
+    "IMS": "tab:purple",
+}
+
 
 
 
@@ -199,10 +208,8 @@ def get_swift_xrt_counts(verbose=True, incbad = True, just_ids = False):
     Note that the IDs are only in the WT.qdp and PC.qdp files, not in the curve.qdp files.
     """
  
-    print("Get swift xrt counts")
 
     file = Path(__file__).resolve().parent.parent / "lightcurves_swift_xrt" 
-    print(file)
 
 
     # Initialise arrays
@@ -219,8 +226,6 @@ def get_swift_xrt_counts(verbose=True, incbad = True, just_ids = False):
     sub_files = glob.glob(f'{file}/00*')
     if not sub_files:
         sub_files = [file]
-
-    print("Sub-files found:", sub_files)
 
     # The routine creates separate sub-folders for each ID
     for lc_file in sub_files:
@@ -357,7 +362,6 @@ def get_swift_xrt_counts(verbose=True, incbad = True, just_ids = False):
     for lc_file in sub_files:
 
         hr_name = glob.glob(f'{lc_file}/hardrat.qdp')[0] 
-        print(hr_name)
 
         pattern = re.compile(r"\s*!::.*$")
         with open(hr_name) as fin, tempfile.NamedTemporaryFile(
@@ -463,7 +467,8 @@ def get_maxi_counts():
 
 
     # Filter where error is too large
-    error_mask = np.ones_like(hardness_err, dtype=bool)  # No filtering for now
+    #error_mask = np.ones_like(hardness_err, dtype=bool)  # No filtering for now
+    error_mask = log_hardness_err < 0.2
 
     mjd = mjd[error_mask]
     hardness = hardness[error_mask]
@@ -474,6 +479,8 @@ def get_maxi_counts():
     count_rate_4_10_err = count_rate_4_10_err[error_mask]
     count_rate_2_20 = count_rate_2_20[error_mask]
     count_rate_2_20_err = count_rate_2_20_err[error_mask]
+    count_rate_10_20 = count_rate_10_20[error_mask]
+    count_rate_10_20_err = count_rate_10_20_err[error_mask]
 
 
     return mjd, hardness,hardness_err , count_rate_2_4 ,count_rate_2_4_err ,count_rate_4_10 , count_rate_4_10_err ,count_rate_2_20 , count_rate_2_20_err , count_rate_10_20 , count_rate_10_20_err
@@ -502,8 +509,8 @@ def get_bat_counts():
     rate = data[:, 1]
     error = data[:, 2]
 
-    # ---- Remove negative count rates ----
-    mask = rate >= 0
+    # Remove negative count rates and when error is too large
+    mask = (rate >= 0) & (error < 0.8*rate)  # Example: keep points where error is less than 80% of the rate
     mjd = mjd[mask]
     rate = rate[mask]
     error = error[mask]
@@ -528,7 +535,7 @@ def plot_count_rates_and_hr(gap_days=60):
     mpl.rcParams['xtick.labelbottom'] = False
 
 
-    transitions = TRANSITIONS
+    qs, hs, ss, ims = QS, HS, SS, IMS
     xrt_soft_lo, xrt_soft_hi, xrt_hard_lo, xrt_hard_hi, xrt_min_E_lc = SOFT_LO, SOFT_HI, HARD_LO, HARD_HI, MIN_E_LC
 
     # -------------------------
@@ -538,8 +545,6 @@ def plot_count_rates_and_hr(gap_days=60):
     # Swift/XRT
     xrt_mjds, xrt_cps, xrt_cps_nunc, xrt_cps_punc, xrt_uplims_bool, xrt_obs_type, xrt_hr_mjds, xrt_hr, xrt_hr_unc, xrt_low_cps, xrt_low_cps_unc, xrt_high_cps, xrt_high_cps_unc = get_swift_xrt_counts()
 
-
-    print(xrt_hr_mjds)
 
 
     # -------------------------
@@ -618,7 +623,6 @@ def plot_count_rates_and_hr(gap_days=60):
         # Masks selecting data within this window
         xrt_mask = (xrt_mjds >= seg_tmin) & (xrt_mjds <= seg_tmax)
         xrt_hr_mask = (xrt_hr_mjds >= seg_tmin) & (xrt_hr_mjds <= seg_tmax)
-        print(xrt_hr_mjds[xrt_hr_mask])
         if incl_bat: bat_mask = (bat_mjds >= seg_tmin) & (bat_mjds <= seg_tmax)
         if incl_maxi: maxi_mask = (maxi_mjds >= seg_tmin) & (maxi_mjds <= seg_tmax)
         if incl_mkt: mkt_mask = (mkt_mjds >= seg_tmin) & (mkt_mjds <= seg_tmax)
@@ -777,13 +781,19 @@ def plot_count_rates_and_hr(gap_days=60):
 
 
         # ---------- vertical transition lines if present ----------
-        if transitions is not None:
-            for t in transitions:
-                if (t >= seg_tmin) and (t <= seg_tmax):
-                    for a in axes:
-                        a.axvline(Time(t, format='mjd').datetime, color='yellow', linestyle='--', linewidth=1.2)
+        for i, ax in enumerate(axes):
+            for (xk, label) in [(qs, "QS"), (hs, "HS"), (ss, "SS"), (ims, "IMS")]:
+                    for k, (x0, x1) in enumerate(xk):
+                        ax.axvspan(
+                            Time(x0, format='mjd').datetime, Time(x1, format='mjd').datetime,
+                            color=colours_states[label],
+                            alpha=0.2,
+                            label=label if (k == 0 and i == len(axes) - 1)  else None  # only label once for legend
+                        )
      
 
+        axes[9].legend(fontsize=11)
+     
         # ---------- X-axis formatting ----------
         plt.xlim([seg_tmin, seg_tmax ])  
         # use the FormatAxis helper you already have; pick interval from duration

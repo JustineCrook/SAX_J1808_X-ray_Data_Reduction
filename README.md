@@ -53,7 +53,7 @@ Notably:
 ## Code Structure
 
 - All user inputs are defined in `input_parameters.py`
-- In `input_parameters.py`, change the ANALYSIS_TYPE to be one of the following, which corresponds to the sub-sections below:
+- In `input_parameters.py`, change the `ANALYSIS_TYPE` to be one of the following, which corresponds to the sub-sections below:
     - `get_swift_xrt_data`
     - `plot_count_rates_and_hr`
     - `group_spectra`
@@ -121,7 +121,15 @@ Place additional datasets in `./other_lightcurve_data/`:
 
 ### Parameters
 
-- `TRANSITIONS` – Optional vertical lines at specific times (e.g., state transitions) in the plots
+- `QS`, `HS`, `IMS`, `SS` – Lists containing MJD ranges for the quiescent state (QS), hard state (HS), intermediate state (IMS), and soft state (SS). 
+These are plotted as coloured regions. Leave as empty lists (i.e., []) if not required.
+Example:
+```python
+QS = []
+HS = [ [59081,59094], [60570,60581], [60619,60650]]
+IMS = [[59094,59100], [60581,60583], [60609,60619] ]
+SS = [[60583,60604]]
+```
 
 
 
@@ -225,7 +233,7 @@ Else, I do no rebinning.
 The setting used is shown in the title of the residual plots. 
 
 
-Each folder `./spectral_fit_results_bin*/ contains:
+Each folder `./spectral_fit_results_bin*/` contains:
 - Plots showing all results.  
 - `fit_outputs.txt` tabulating all the results.  
 - `not_fit.txt` are the spectra that were not fit (upper limits or too few counts).  
@@ -246,7 +254,7 @@ Each folder `./spectral_fit_results_bin*/ contains:
 ### NOTEBOOKS/example_manual_fitting.ipynb:
 - Since the code is automated, there are cases where it may be beneficial to fit the data manually. 
 - This is mainly because some spectral fits can be extremely sensitive to initial parameters -- especially in cases where more complex models are used. 
-- This notebook shows how to do manual fits in PyXspec for different models.
+- This notebook shows how to do manual fits in `PyXspec` for different models.
 
 
 
@@ -280,12 +288,12 @@ This means that we should use the powerlaw model for points 0-5 and 10-15 and 20
 
 
 ### Outputs:
-- The results will either be in ./final_spectral_fit_results_bin/ (for FIT_WITH_BINNING=True) or ./final_spectral_fit_results_bin1/ (FIT_WITH_BINNING=False).
+- The results will either be in `./final_spectral_fit_results_bin/` (for `FIT_WITH_BINNING=True`) or `./final_spectral_fit_results_bin1/` (`FIT_WITH_BINNING=False`).
 
 
 
 ### NOTEBOOKS/binning_comparison.ipynb:
-- If you ran both with both FIT_WITH_BINNING=True and FIT_WITH_BINNING=False, you can use this notebook to compare these flux results. 
+- If you ran both with both `FIT_WITH_BINNING=True` and `FIT_WITH_BINNING=False`, you can use this notebook to compare these flux results. 
 
 
 
@@ -294,7 +302,7 @@ This means that we should use the powerlaw model for points 0-5 and 10-15 and 20
 
 ## Get Dates 
 
-In the code folder, the script `fit_xrt_spectra.py` is the most accurate way to get the Swift/XRT dates. This uses `swifttime`. 
+In the code folder, the script `get_dates.py` is the most accurate way to get the Swift/XRT dates. This uses `swifttime`. 
 
 
 ---
